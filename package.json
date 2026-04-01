@@ -1,0 +1,26 @@
+{
+  "name": "wiki-mermaid-preview",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite build --watch",
+    "build": "vite build",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "mermaid": "^11.6.0"
+  },
+  "devDependencies": {
+    "@crxjs/vite-plugin": "^2.0.0-beta.30",
+    "@testing-library/dom": "^10.4.0",
+    "@types/chrome": "^0.0.321",
+    "@types/node": "^22.15.21",
+    "jsdom": "^26.0.0",
+    "typescript": "^5.8.2",
+    "vite": "^6.2.0",
+    "vitest": "^3.0.8",
+    "type-fest": "^4.40.1"
+  }
+}
