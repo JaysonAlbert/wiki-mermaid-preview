@@ -2,7 +2,7 @@ import { previewClassName, processedMarker } from "./dom-markers"
 import { extractMermaidSource } from "./extract"
 import { looksLikeMermaid } from "./mermaid-detect"
 import { renderPreviewBelow } from "./preview"
-import type { SelectorRule } from "./types"
+import type { DisplayMode, SelectorRule } from "./types"
 import { urlMatchesAnyPattern } from "./url-match"
 
 function validateLineSelector(rule: SelectorRule): string | undefined | null {
@@ -32,7 +32,20 @@ function queryCandidates(root: Document | Element, selector: string): Element[] 
   }
 }
 
-export async function scanRoot(root: Document | Element, rules: SelectorRule[], currentUrl: string) {
+function getSourceDisplayTarget(container: Element): HTMLElement | null {
+  if (container.parentElement instanceof HTMLElement && container.parentElement.tagName === "PRE") {
+    return container.parentElement
+  }
+
+  return container instanceof HTMLElement ? container : null
+}
+
+export async function scanRoot(
+  root: Document | Element,
+  rules: SelectorRule[],
+  currentUrl: string,
+  displayMode: DisplayMode = "codeAndPreview"
+) {
   for (const rule of rules) {
     if (!rule.enabled || !urlMatchesAnyPattern(currentUrl, rule.urlPatterns)) {
       continue
@@ -73,7 +86,17 @@ export async function scanRoot(root: Document | Element, rules: SelectorRule[], 
       }
 
       candidate.setAttribute(processedMarker, "true")
+      if (displayMode === "codeOnly") {
+        continue
+      }
+
       await renderPreviewBelow(candidate, source)
+      if (displayMode === "previewOnly") {
+        const sourceDisplayTarget = getSourceDisplayTarget(candidate)
+        if (sourceDisplayTarget) {
+          sourceDisplayTarget.hidden = true
+        }
+      }
     }
   }
 }

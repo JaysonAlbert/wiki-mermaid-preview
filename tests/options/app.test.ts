@@ -417,6 +417,35 @@ describe("mountOptionsApp", () => {
     })
   })
 
+  it("renders and saves the display mode setting", async () => {
+    const set = vi.fn().mockResolvedValue(undefined)
+    vi.stubGlobal("chrome", {
+      storage: {
+        sync: {
+          get: vi.fn().mockResolvedValue({
+            selectorRules: defaultRules,
+            displayMode: "codeAndPreview"
+          }),
+          set
+        }
+      }
+    })
+
+    const root = document.createElement("div")
+    document.body.append(root)
+
+    await mountOptionsApp(root)
+
+    const displayModeSelect = screen.getByLabelText("Display mode")
+    expect(within(displayModeSelect).getByRole("option", { name: "Code + preview" })).toBeTruthy()
+    expect(within(displayModeSelect).getByRole("option", { name: "Code only" })).toBeTruthy()
+    expect(within(displayModeSelect).getByRole("option", { name: "Preview only" })).toBeTruthy()
+
+    fireEvent.change(displayModeSelect, { target: { value: "previewOnly" } })
+
+    expect(set).toHaveBeenCalledWith({ displayMode: "previewOnly" })
+  })
+
   it("logs autosave failures without breaking the editor", async () => {
     vi.useFakeTimers()
 

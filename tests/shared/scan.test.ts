@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 import { processedMarker, previewClassName } from "../../src/shared/dom-markers"
 import { scanRoot } from "../../src/shared/scan"
 
@@ -15,6 +15,21 @@ vi.mock("mermaid", () => ({
 }))
 
 describe("scanRoot", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  const codeBlockRule = {
+    id: "rule-1",
+    name: "rule",
+    enabled: true,
+    urlPatterns: ["http://example.com/*"],
+    containerSelector: "pre > code.language-mermaid",
+    extractMode: "innerText" as const,
+    trimLines: false,
+    removeEmptyLines: false
+  }
+
   it("inserts preview below the whole pre block and stays idempotent", async () => {
     document.body.innerHTML = `
       <pre>
@@ -23,18 +38,7 @@ describe("scanRoot", () => {
       </pre>
     `
 
-    const rules = [
-      {
-        id: "rule-1",
-        name: "rule",
-        enabled: true,
-        urlPatterns: ["http://example.com/*"],
-        containerSelector: "pre > code.language-mermaid",
-        extractMode: "innerText",
-        trimLines: false,
-        removeEmptyLines: false
-      }
-    ]
+    const rules = [codeBlockRule]
 
     await scanRoot(document, rules, "http://example.com/pages/1")
     await scanRoot(document, rules, "http://example.com/pages/1")
@@ -50,6 +54,44 @@ describe("scanRoot", () => {
     expect(mermaidInitialize).toHaveBeenCalledWith(
       expect.objectContaining({ securityLevel: "strict" })
     )
+  })
+
+  it("keeps code visible and skips rendering in code-only mode", async () => {
+    document.body.innerHTML = `
+      <pre>
+        <code class="language-mermaid">graph TD
+  A-->B</code>
+      </pre>
+    `
+
+    await scanRoot(document, [codeBlockRule], "http://example.com/pages/1", "codeOnly")
+
+    const pre = document.querySelector("pre")
+    const code = document.querySelector("code")
+
+    expect(code?.getAttribute(processedMarker)).toBe("true")
+    expect(pre?.hidden).toBe(false)
+    expect(document.querySelector(`.${previewClassName}`)).toBeNull()
+    expect(mermaidRender).not.toHaveBeenCalled()
+  })
+
+  it("hides the whole code block after rendering in preview-only mode", async () => {
+    document.body.innerHTML = `
+      <pre>
+        <code class="language-mermaid">graph TD
+  A-->B</code>
+      </pre>
+    `
+
+    await scanRoot(document, [codeBlockRule], "http://example.com/pages/1", "previewOnly")
+
+    const pre = document.querySelector("pre")
+    const preview = document.querySelector(`.${previewClassName}`)
+
+    expect(pre?.hidden).toBe(true)
+    expect(pre?.nextElementSibling).toBe(preview)
+    expect(document.querySelectorAll(`.${previewClassName}`)).toHaveLength(1)
+    expect(mermaidRender).toHaveBeenCalled()
   })
 
   it("skips malformed container selectors without aborting the scan pass", async () => {

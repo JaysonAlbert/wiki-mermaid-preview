@@ -5,10 +5,15 @@ import {
 import { isValidMatchPattern } from "../shared/match-pattern"
 import { createRuntimeId } from "../shared/runtime-id"
 import { getSiteAccessPatterns, saveSiteAccessPatterns } from "../shared/site-access"
-import { loadRules, saveRules } from "../shared/storage"
-import type { ExtractMode, SelectorRule, SiteAccessPattern } from "../shared/types"
+import { loadDisplayMode, loadRules, saveDisplayMode, saveRules } from "../shared/storage"
+import type { DisplayMode, ExtractMode, SelectorRule, SiteAccessPattern } from "../shared/types"
 
 const extractModes: ExtractMode[] = ["auto", "innerText", "joinChildrenText", "fencedMermaid"]
+const displayModeOptions: Array<{ label: string; value: DisplayMode }> = [
+  { label: "Code + preview", value: "codeAndPreview" },
+  { label: "Code only", value: "codeOnly" },
+  { label: "Preview only", value: "previewOnly" }
+]
 const autosaveDelayMs = 250
 const defaultRuleIds = new Set(defaultRules.map((rule) => rule.id))
 
@@ -194,6 +199,24 @@ function buildSelect(value: ExtractMode): HTMLSelectElement {
   return select
 }
 
+function buildDisplayModeSelect(value: DisplayMode): HTMLSelectElement {
+  const select = document.createElement("select")
+  select.className = "wmp-options__input"
+  select.dataset.field = "displayMode"
+
+  for (const mode of displayModeOptions) {
+    const option = document.createElement("option")
+    option.value = mode.value
+    option.textContent = mode.label
+    if (mode.value === value) {
+      option.selected = true
+    }
+    select.append(option)
+  }
+
+  return select
+}
+
 function buildCheckbox(field: keyof Pick<SelectorRule, "enabled" | "trimLines" | "removeEmptyLines">, checked: boolean) {
   const input = document.createElement("input")
   input.type = "checkbox"
@@ -305,6 +328,7 @@ function syncRuleCardTitle(card: HTMLElement, rule: SelectorRule) {
 function renderPage(
   root: HTMLElement,
   rules: SelectorRule[],
+  displayMode: DisplayMode,
   siteAccessPatterns: SiteAccessPattern[],
   siteAccessInput: string,
   siteAccessStatus: string,
@@ -345,6 +369,23 @@ function renderPage(
 
   toolbar.append(addButton, resetButton)
   header.append(eyebrow, title, description, toolbar)
+
+  const displayModeSection = document.createElement("section")
+  displayModeSection.className = "wmp-display-mode"
+
+  const displayModeTitle = document.createElement("h2")
+  displayModeTitle.className = "wmp-display-mode__title"
+  displayModeTitle.textContent = "Display"
+
+  const displayModeDescription = document.createElement("p")
+  displayModeDescription.className = "wmp-display-mode__description"
+  displayModeDescription.textContent = "Choose how matched Mermaid blocks appear on wiki pages."
+
+  displayModeSection.append(
+    displayModeTitle,
+    displayModeDescription,
+    buildLabel("Display mode", buildDisplayModeSelect(displayMode))
+  )
 
   const siteAccessSection = document.createElement("section")
   siteAccessSection.className = "wmp-site-access"
@@ -407,12 +448,13 @@ function renderPage(
     list.append(buildRuleCard(rule))
   }
 
-  shell.append(header, siteAccessSection, note, list)
+  shell.append(header, displayModeSection, siteAccessSection, note, list)
   root.append(shell)
 }
 
 export async function mountOptionsApp(root: HTMLElement) {
   let rules = cloneRules(await loadRules())
+  let displayMode = await loadDisplayMode()
   let siteAccessPatterns = cloneSiteAccessPatterns(await getSiteAccessPatterns())
   let siteAccessInput = ""
   let siteAccessStatus = ""
@@ -431,6 +473,7 @@ export async function mountOptionsApp(root: HTMLElement) {
     renderPage(
       root,
       rules,
+      displayMode,
       siteAccessPatterns,
       siteAccessInput,
       siteAccessStatus,
@@ -612,8 +655,17 @@ export async function mountOptionsApp(root: HTMLElement) {
   })
 
   root.addEventListener("change", (event) => {
-    const card = getRuleCard(event.target)
     const field = event.target instanceof HTMLElement ? event.target.dataset.field : undefined
+
+    if (event.target instanceof HTMLSelectElement && field === "displayMode") {
+      displayMode = event.target.value as DisplayMode
+      void saveDisplayMode(displayMode).catch((error) => {
+        console.error("[wiki-mermaid-preview]", error)
+      })
+      return
+    }
+
+    const card = getRuleCard(event.target)
 
     if (!card || !field) {
       return

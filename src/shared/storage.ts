@@ -1,7 +1,10 @@
 import { defaultRules } from "./default-rules"
-import type { SelectorRule } from "./types"
+import type { DisplayMode, SelectorRule } from "./types"
 
 const storageKey = "selectorRules"
+const displayModeStorageKey = "displayMode"
+const defaultDisplayMode: DisplayMode = "codeAndPreview"
+const displayModes = new Set<DisplayMode>(["codeAndPreview", "codeOnly", "previewOnly"])
 const legacyInternalRulePatternHash = 659150893
 
 function fnv1a32(value: string): number {
@@ -42,4 +45,14 @@ export async function saveRules(rules: SelectorRule[]): Promise<void> {
 
 export async function resetRules(): Promise<void> {
   await chrome.storage.sync.set({ [storageKey]: cloneRules(defaultRules) })
+}
+
+export async function loadDisplayMode(): Promise<DisplayMode> {
+  const result = await chrome.storage.sync.get(displayModeStorageKey)
+  const savedMode = result[displayModeStorageKey]
+  return displayModes.has(savedMode as DisplayMode) ? (savedMode as DisplayMode) : defaultDisplayMode
+}
+
+export async function saveDisplayMode(displayMode: DisplayMode): Promise<void> {
+  await chrome.storage.sync.set({ [displayModeStorageKey]: displayMode })
 }

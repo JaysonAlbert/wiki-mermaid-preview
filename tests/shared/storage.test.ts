@@ -1,8 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { defaultRules } from "../../src/shared/default-rules"
 import {
+  loadDisplayMode,
   loadRules,
   resetRules,
+  saveDisplayMode,
   saveRules
 } from "../../src/shared/storage"
 import {
@@ -120,6 +122,35 @@ describe("saveRules", () => {
 
     expect(set).toHaveBeenCalledWith({ selectorRules: editedRules })
     expect(loadedRules).toEqual(editedRules)
+  })
+})
+
+describe("display mode storage", () => {
+  it("defaults to code and preview mode", async () => {
+    vi.stubGlobal("chrome", {
+      storage: {
+        sync: {
+          get: vi.fn().mockResolvedValue({})
+        }
+      }
+    })
+
+    await expect(loadDisplayMode()).resolves.toBe("codeAndPreview")
+  })
+
+  it("stores the selected display mode", async () => {
+    const set = vi.fn().mockResolvedValue(undefined)
+    vi.stubGlobal("chrome", {
+      storage: {
+        sync: {
+          set
+        }
+      }
+    })
+
+    await saveDisplayMode("previewOnly")
+
+    expect(set).toHaveBeenCalledWith({ displayMode: "previewOnly" })
   })
 })
 

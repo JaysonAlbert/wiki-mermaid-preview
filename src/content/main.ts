@@ -1,4 +1,4 @@
-import { loadRules } from "../shared/storage"
+import { loadDisplayMode, loadRules } from "../shared/storage"
 import { scanRoot } from "../shared/scan"
 import { createScanScheduler } from "./scan-scheduler"
 
@@ -6,8 +6,8 @@ let scanTimer: number | undefined
 
 async function runScan() {
   try {
-    const rules = await loadRules()
-    await scanRoot(document, rules, window.location.href)
+    const [rules, displayMode] = await Promise.all([loadRules(), loadDisplayMode()])
+    await scanRoot(document, rules, window.location.href, displayMode)
   } catch (error) {
     console.error("[wiki-mermaid-preview]", error)
   }
