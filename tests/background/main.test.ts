@@ -52,7 +52,7 @@ describe("bootstrapRegistration", () => {
 })
 
 describe("display mode context menu", () => {
-  it("creates radio menu items under the extension action menu", async () => {
+  it("creates radio menu items under a display mode submenu", async () => {
     const removeAll = vi.fn((callback: () => void) => callback())
     const create = vi.fn()
     loadDisplayMode.mockResolvedValue("previewOnly")
@@ -66,9 +66,15 @@ describe("display mode context menu", () => {
     await setupDisplayModeContextMenu()
 
     expect(removeAll).toHaveBeenCalled()
+    expect(create).toHaveBeenCalledWith({
+      id: "display-mode",
+      title: "Display Mode",
+      contexts: ["action"]
+    })
     expect(create).toHaveBeenCalledWith(
       expect.objectContaining({
         id: "display-mode-previewOnly",
+        parentId: "display-mode",
         type: "radio",
         contexts: ["action"],
         checked: true

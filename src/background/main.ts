@@ -14,6 +14,7 @@ export type BootstrapRegistrationDeps = {
 }
 
 const siteAccessStorageKey = "siteAccessPatterns"
+const displayModeParentMenuId = "display-mode"
 const displayModeMenuPrefix = "display-mode-"
 const displayModeMenuItems: Array<{ id: DisplayMode; title: string }> = [
   { id: "codeAndPreview", title: "Code + preview" },
@@ -58,9 +59,16 @@ export async function setupDisplayModeContextMenu(): Promise<void> {
   const displayMode = await loadDisplayMode()
   await removeAllContextMenus()
 
+  chrome.contextMenus.create({
+    id: displayModeParentMenuId,
+    title: "Display Mode",
+    contexts: ["action"]
+  })
+
   for (const item of displayModeMenuItems) {
     chrome.contextMenus.create({
       id: `${displayModeMenuPrefix}${item.id}`,
+      parentId: displayModeParentMenuId,
       title: item.title,
       type: "radio",
       contexts: ["action"],
