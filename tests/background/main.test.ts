@@ -4,14 +4,27 @@ const { refreshRegisteredContentScripts } = vi.hoisted(() => ({
   refreshRegisteredContentScripts: vi.fn()
 }))
 
+const { loadDisplayMode, saveDisplayMode } = vi.hoisted(() => ({
+  loadDisplayMode: vi.fn(),
+  saveDisplayMode: vi.fn()
+}))
+
 vi.mock("../../src/shared/content-script-registration", () => ({
   refreshRegisteredContentScripts
 }))
 
-import { bootstrapRegistration } from "../../src/background/main"
+vi.mock("../../src/shared/storage", () => ({
+  loadDisplayMode,
+  saveDisplayMode
+}))
+
+import { bootstrapRegistration, handleDisplayModeMenuClick, setupDisplayModeContextMenu } from "../../src/background/main"
 
 afterEach(() => {
   refreshRegisteredContentScripts.mockReset()
+  loadDisplayMode.mockReset()
+  saveDisplayMode.mockReset()
+  vi.unstubAllGlobals()
 })
 
 describe("bootstrapRegistration", () => {
@@ -35,5 +48,49 @@ describe("bootstrapRegistration", () => {
     await bootstrapRegistration({ getSiteAccessPatterns })
 
     expect(refreshRegisteredContentScripts).toHaveBeenCalledWith([])
+  })
+})
+
+describe("display mode context menu", () => {
+  it("creates radio menu items under the extension action menu", async () => {
+    const removeAll = vi.fn((callback: () => void) => callback())
+    const create = vi.fn()
+    loadDisplayMode.mockResolvedValue("previewOnly")
+    vi.stubGlobal("chrome", {
+      contextMenus: {
+        removeAll,
+        create
+      }
+    })
+
+    await setupDisplayModeContextMenu()
+
+    expect(removeAll).toHaveBeenCalled()
+    expect(create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: "display-mode-previewOnly",
+        type: "radio",
+        contexts: ["action"],
+        checked: true
+      })
+    )
+    expect(create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: "display-mode-codeAndPreview",
+        title: "Code + preview"
+      })
+    )
+    expect(create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: "display-mode-codeOnly",
+        title: "Code only"
+      })
+    )
+  })
+
+  it("saves display mode clicks from the context menu", async () => {
+    await handleDisplayModeMenuClick({ menuItemId: "display-mode-codeOnly" })
+
+    expect(saveDisplayMode).toHaveBeenCalledWith("codeOnly")
   })
 })

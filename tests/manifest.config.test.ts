@@ -3,7 +3,7 @@ import { extensionManifest } from "../manifest.config"
 
 describe("extensionManifest", () => {
   it("declares only valid required permissions for the extension APIs in use", () => {
-    expect(extensionManifest.permissions).toEqual(["storage", "scripting"])
+    expect(extensionManifest.permissions).toEqual(["storage", "scripting", "contextMenus"])
     expect(extensionManifest.permissions).not.toContain("permissions")
   })
 
