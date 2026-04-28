@@ -3,7 +3,7 @@ import type { ManifestV3Export } from "@crxjs/vite-plugin"
 export const extensionManifest: ManifestV3Export = {
   manifest_version: 3,
   name: "Wiki Mermaid Preview",
-  version: "0.1.0",
+  version: "0.1.1",
   description: "Render Mermaid previews below code blocks on authorized sites.",
   icons: {
     16: "icons/icon16.png",
