@@ -1,4 +1,4 @@
-export type ExtractMode = "auto" | "innerText" | "joinChildrenText"
+export type ExtractMode = "auto" | "innerText" | "joinChildrenText" | "fencedMermaid"
 
 export type SiteAccessPattern = {
   id: string

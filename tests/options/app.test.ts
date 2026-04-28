@@ -398,6 +398,7 @@ describe("mountOptionsApp", () => {
     expect(screen.getByRole("heading", { name: "Wiki Mermaid Preview" })).toBeTruthy()
     expect(screen.getByDisplayValue("Confluence line-by-line Mermaid")).toBeTruthy()
     expect(screen.getByDisplayValue("Code tag Mermaid block")).toBeTruthy()
+    expect(screen.getByDisplayValue("Wiki rich-text fenced Mermaid")).toBeTruthy()
 
     const firstCard = screen.getByTestId("rule-card-confluence-line-by-line")
     const nameInput = within(firstCard).getByLabelText("Rule name")
@@ -544,12 +545,16 @@ describe("mountOptionsApp", () => {
 
     await mountOptionsApp(root)
 
+    const firstCard = screen.getByTestId("rule-card-confluence-line-by-line")
+    const extractModeSelect = within(firstCard).getByLabelText("Extract mode")
+    expect(within(extractModeSelect).getByRole("option", { name: "fencedMermaid" })).toBeTruthy()
+
     fireEvent.click(screen.getByRole("button", { name: "Add Rule" }))
 
     const enabledCheckboxes = screen.getAllByLabelText("Enabled")
     const addedRuleEnabled = enabledCheckboxes[enabledCheckboxes.length - 1] as HTMLInputElement
     expect(addedRuleEnabled.checked).toBe(false)
-    expect(screen.getAllByDisplayValue("*://*/*").length).toBe(3)
+    expect(screen.getAllByDisplayValue("*://*/*").length).toBe(4)
 
     expect(set).toHaveBeenCalledWith({
       selectorRules: expect.arrayContaining([

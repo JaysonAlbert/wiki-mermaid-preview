@@ -2,6 +2,23 @@ import mermaid from "mermaid"
 import { previewClassName } from "./dom-markers"
 import { createRuntimeId } from "./runtime-id"
 
+const xmlVoidHtmlTags = new Set([
+  "area",
+  "base",
+  "br",
+  "col",
+  "embed",
+  "hr",
+  "img",
+  "input",
+  "link",
+  "meta",
+  "param",
+  "source",
+  "track",
+  "wbr"
+])
+
 function getInsertionTarget(container: Element): Element {
   if (container.parentElement?.tagName === "PRE") {
     return container.parentElement
@@ -10,11 +27,24 @@ function getInsertionTarget(container: Element): Element {
   return container
 }
 
+function normalizeVoidHtmlTagsForXml(svg: string): string {
+  return svg.replace(/<([a-z][a-z0-9-]*)(\s[^<>]*)?>/gi, (match, tagName: string, attributes = "") => {
+    if (!xmlVoidHtmlTags.has(tagName.toLowerCase()) || attributes.trimEnd().endsWith("/")) {
+      return match
+    }
+
+    return `<${tagName}${attributes} />`
+  })
+}
+
 function setPreviewBodySvg(body: Element, svg: string): void {
-  const parsed = new DOMParser().parseFromString(svg, "image/svg+xml")
+  const parsed = new DOMParser().parseFromString(normalizeVoidHtmlTagsForXml(svg), "image/svg+xml")
   const svgElement = parsed.documentElement
 
-  if (svgElement.tagName.toLowerCase() === "parsererror") {
+  if (
+    svgElement.tagName.toLowerCase() === "parsererror" ||
+    parsed.querySelector("parsererror")
+  ) {
     throw new Error("Failed to parse Mermaid SVG output.")
   }
 

@@ -153,4 +153,49 @@ describe("scanRoot", () => {
 
     errorSpy.mockRestore()
   })
+
+  it("renders a preview for a mermaid fenced block inside rich wiki text", async () => {
+    document.body.innerHTML = `
+      <div class="wiki-content">
+        <p id="rich-text-block"></p>
+      </div>
+    `
+
+    const paragraph = document.getElementById("rich-text-block") as HTMLElement
+    paragraph.innerText = [
+      "# FastTrsClearingServiceImpl.doCalculate",
+      "",
+      "说明文字",
+      "```mermaid",
+      "flowchart TD",
+      "  A-->B",
+      "```",
+      "",
+      "更多说明"
+    ].join("\n")
+
+    await scanRoot(
+      document,
+      [
+        {
+          id: "rich-rule",
+          name: "rich",
+          enabled: true,
+          urlPatterns: ["http://example.com/*"],
+          containerSelector: ".wiki-content p",
+          extractMode: "fencedMermaid",
+          trimLines: false,
+          removeEmptyLines: false
+        }
+      ],
+      "http://example.com/pages/1"
+    )
+
+    const preview = document.querySelector(`.${previewClassName}`)
+
+    expect(paragraph.getAttribute(processedMarker)).toBe("true")
+    expect(paragraph.nextElementSibling).toBe(preview)
+    expect(document.querySelectorAll(`.${previewClassName}`)).toHaveLength(1)
+    expect(mermaidRender).toHaveBeenLastCalledWith(expect.any(String), "flowchart TD\n  A-->B")
+  })
 })

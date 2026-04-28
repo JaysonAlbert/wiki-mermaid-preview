@@ -32,4 +32,27 @@ describe("extractMermaidSource", () => {
       })
     ).toBe("graph TD\nA-->B")
   })
+
+  it("extracts the first mermaid fenced block from rich text", () => {
+    const container = document.createElement("div")
+    container.textContent = [
+      "# FastTrsClearingServiceImpl.doCalculate",
+      "",
+      "说明文字",
+      "```mermaid",
+      "flowchart TD",
+      "  A-->B",
+      "```",
+      "",
+      "更多说明"
+    ].join("\n")
+
+    expect(
+      extractMermaidSource(container, {
+        extractMode: "fencedMermaid",
+        trimLines: false,
+        removeEmptyLines: false
+      })
+    ).toBe("flowchart TD\n  A-->B")
+  })
 })

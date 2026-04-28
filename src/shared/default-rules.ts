@@ -21,5 +21,15 @@ export const defaultRules: SelectorRule[] = [
     extractMode: "innerText",
     trimLines: false,
     removeEmptyLines: false
+  },
+  {
+    id: "wiki-rich-text-fenced-mermaid",
+    name: "Wiki rich-text fenced Mermaid",
+    enabled: true,
+    urlPatterns: ["*://*/*"],
+    containerSelector: ".wiki-content p",
+    extractMode: "fencedMermaid",
+    trimLines: false,
+    removeEmptyLines: false
   }
 ]

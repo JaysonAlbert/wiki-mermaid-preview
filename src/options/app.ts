@@ -8,7 +8,7 @@ import { getSiteAccessPatterns, saveSiteAccessPatterns } from "../shared/site-ac
 import { loadRules, saveRules } from "../shared/storage"
 import type { ExtractMode, SelectorRule, SiteAccessPattern } from "../shared/types"
 
-const extractModes: ExtractMode[] = ["auto", "innerText", "joinChildrenText"]
+const extractModes: ExtractMode[] = ["auto", "innerText", "joinChildrenText", "fencedMermaid"]
 const autosaveDelayMs = 250
 const defaultRuleIds = new Set(defaultRules.map((rule) => rule.id))
 
