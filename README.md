@@ -98,6 +98,25 @@ sequenceDiagram
 
 - `npm run test`
 
+## 升级版本
+
+默认升级补丁版本，并同时更新 `package.json`、`package-lock.json` 和
+`manifest.config.ts`：
+
+```bash
+npm run version:bump
+```
+
+也可以指定升级级别或 Chrome 扩展版本号：
+
+```bash
+npm run version:bump -- minor
+npm run version:bump -- major
+npm run version:bump -- 2.10.2.4
+```
+
+命令会在修改前检查三个文件中的现有版本是否一致，并拒绝无效或不大于当前版本的版本号。升级后运行 `npm test && npm run build`，即可检查并生成待发布的 `dist` 目录。
+
 ## 在 Chrome 中加载
 
 1. 运行 `npm install`
