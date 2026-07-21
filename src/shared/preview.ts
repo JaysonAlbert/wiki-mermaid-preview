@@ -63,7 +63,8 @@ export async function renderPreviewBelow(container: Element, source: string): Pr
 
   try {
     mermaid.initialize({ startOnLoad: false, securityLevel: "strict" })
-    const { svg } = await mermaid.render(createRuntimeId("wmp"), source)
+    const renderContainer = document.createElement("div")
+    const { svg } = await mermaid.render(createRuntimeId("wmp"), source, renderContainer)
     setPreviewBodySvg(wrapper.querySelector(".wmp-preview__body")!, svg)
   } catch (error) {
     const errorBox = document.createElement("div")

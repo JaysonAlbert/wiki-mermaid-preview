@@ -238,6 +238,10 @@ describe("scanRoot", () => {
     expect(paragraph.getAttribute(processedMarker)).toBe("true")
     expect(paragraph.nextElementSibling).toBe(preview)
     expect(document.querySelectorAll(`.${previewClassName}`)).toHaveLength(1)
-    expect(mermaidRender).toHaveBeenLastCalledWith(expect.any(String), "flowchart TD\n  A-->B")
+    expect(mermaidRender).toHaveBeenLastCalledWith(
+      expect.any(String),
+      "flowchart TD\n  A-->B",
+      expect.any(HTMLDivElement)
+    )
   })
 })

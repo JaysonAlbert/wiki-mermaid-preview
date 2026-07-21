@@ -35,4 +35,28 @@ describe("renderPreviewBelow", () => {
     expect(body?.querySelector("html")).toBeNull()
     expect(body?.textContent).not.toContain("Failed to render Mermaid preview.")
   })
+
+  it("does not leak Mermaid's temporary error SVG into the Wiki page", async () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => undefined)
+    mermaidRender.mockImplementationOnce(async (_id, _source, renderContainer?: Element) => {
+      const target = renderContainer ?? document.body
+      target.insertAdjacentHTML(
+        "beforeend",
+        '<svg data-testid="mermaid-error"><text>Syntax error in text</text></svg>'
+      )
+      throw new Error("invalid Mermaid syntax")
+    })
+
+    const container = document.createElement("div")
+    container.textContent = "invalid source"
+    document.body.append(container)
+
+    await renderPreviewBelow(container, "flowchart LR\nA --> B[/broken]")
+
+    const preview = document.querySelector(`.${previewClassName}`)
+    expect(preview?.textContent).toContain("Failed to render Mermaid preview.")
+    expect(document.body.querySelector('[data-testid="mermaid-error"]')).toBeNull()
+    expect(consoleError).toHaveBeenCalledWith("[wiki-mermaid-preview]", expect.any(Error))
+    consoleError.mockRestore()
+  })
 })
