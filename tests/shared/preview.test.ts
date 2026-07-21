@@ -15,6 +15,25 @@ vi.mock("mermaid", () => ({
 }))
 
 describe("renderPreviewBelow", () => {
+  it("keeps Mermaid's temporary render container connected while rendering", async () => {
+    let renderContainerWasConnected = false
+    mermaidRender.mockImplementationOnce(async (_id, _source, renderContainer?: Element) => {
+      renderContainerWasConnected = renderContainer?.isConnected ?? false
+      return {
+        svg: '<svg xmlns="http://www.w3.org/2000/svg"><text>rendered</text></svg>'
+      }
+    })
+
+    const container = document.createElement("div")
+    container.textContent = "source"
+    document.body.append(container)
+
+    await renderPreviewBelow(container, "graph TD\nA-->B")
+
+    expect(renderContainerWasConnected).toBe(true)
+    expect(document.querySelector(".wmp-preview__render-host")).toBeNull()
+  })
+
   it("sanitizes XHTML line breaks in Mermaid SVG output before parsing", async () => {
     mermaidRender.mockResolvedValueOnce({
       svg: '<svg xmlns="http://www.w3.org/2000/svg"><foreignObject width="120" height="24"><div xmlns="http://www.w3.org/1999/xhtml"><p>line 1<br>line 2</p></div></foreignObject></svg>'
