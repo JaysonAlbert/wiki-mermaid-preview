@@ -1,5 +1,6 @@
 import mermaid from "mermaid"
 import { previewClassName } from "./dom-markers"
+import { normalizeMermaidSource } from "./normalize-source"
 import { createRuntimeId } from "./runtime-id"
 
 const xmlVoidHtmlTags = new Set([
@@ -61,10 +62,25 @@ export async function renderPreviewBelow(container: Element, source: string): Pr
 
   getInsertionTarget(container).insertAdjacentElement("afterend", wrapper)
 
+  const renderContainer = document.createElement("div")
+  renderContainer.className = "wmp-preview__render-host"
+  renderContainer.setAttribute("aria-hidden", "true")
+  Object.assign(renderContainer.style, {
+    position: "fixed",
+    left: "-100000px",
+    top: "0",
+    visibility: "hidden",
+    pointerEvents: "none"
+  })
+  document.body.append(renderContainer)
+
   try {
     mermaid.initialize({ startOnLoad: false, securityLevel: "strict" })
-    const renderContainer = document.createElement("div")
-    const { svg } = await mermaid.render(createRuntimeId("wmp"), source, renderContainer)
+    const { svg } = await mermaid.render(
+      createRuntimeId("wmp"),
+      normalizeMermaidSource(source),
+      renderContainer
+    )
     setPreviewBodySvg(wrapper.querySelector(".wmp-preview__body")!, svg)
   } catch (error) {
     const errorBox = document.createElement("div")
@@ -72,5 +88,7 @@ export async function renderPreviewBelow(container: Element, source: string): Pr
     errorBox.textContent = "Failed to render Mermaid preview."
     wrapper.querySelector(".wmp-preview__body")!.replaceChildren(errorBox)
     console.error("[wiki-mermaid-preview]", error)
+  } finally {
+    renderContainer.remove()
   }
 }
