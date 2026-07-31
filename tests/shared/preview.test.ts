@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from "vitest"
 import { previewClassName } from "../../src/shared/dom-markers"
+import { normalizeMermaidSource } from "../../src/shared/normalize-source"
 import { renderPreviewBelow } from "../../src/shared/preview"
+import { mermaidRenderFailureFixtures } from "../fixtures/mermaid-render-failures"
 
 const { mermaidInitialize, mermaidRender } = vi.hoisted(() => ({
   mermaidInitialize: vi.fn(),
@@ -15,6 +17,28 @@ vi.mock("mermaid", () => ({
 }))
 
 describe("renderPreviewBelow", () => {
+  it.each(mermaidRenderFailureFixtures)(
+    "renders the regression fixture: $name",
+    async ({ source }) => {
+      mermaidRender.mockResolvedValueOnce({
+        svg: '<svg xmlns="http://www.w3.org/2000/svg"><text>rendered</text></svg>'
+      })
+
+      const container = document.createElement("div")
+      container.textContent = source
+      document.body.append(container)
+
+      await renderPreviewBelow(container, source)
+
+      expect(mermaidRender).toHaveBeenLastCalledWith(
+        expect.any(String),
+        normalizeMermaidSource(source),
+        expect.any(Element)
+      )
+      expect(document.querySelector(`.${previewClassName} svg`)).toBeTruthy()
+    }
+  )
+
   it("keeps Mermaid's temporary render container connected while rendering", async () => {
     let renderContainerWasConnected = false
     mermaidRender.mockImplementationOnce(async (_id, _source, renderContainer?: Element) => {
